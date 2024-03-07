@@ -1,125 +1,257 @@
+import 'package:bar_widget_neodocs/assets/models/testsMetadata.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(NeoDocsAssignment());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class NeoDocsAssignment extends StatelessWidget {
+  NeoDocsAssignment({super.key});
+  final ValueNotifier<double> pointerValue = ValueNotifier<double>(0);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a blue toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+      home: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.teal[400],
+          title: const Text('NeoDocs Test Meter'),
+          centerTitle: true,
+        ),
+        body: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              //Widget-1: Bar
+              Bar(pointerValue: pointerValue),
+              const SizedBox(height: 50),
+              //Widget-2: TextField
+              TextFieldWidget(pointerValue: pointerValue),
+            ],
+          ),
+        ),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+//Defining the Bar() Widget
+class Bar extends StatelessWidget {
+  final ValueNotifier<double> pointerValue;
+  final testMetadata = a_test_metadata;
+  Bar({super.key, required this.pointerValue});
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+    return Column(
+      children: [
+        //_buildScale()
+        Container(
+          child: Row(
+            children: _buildScale(context),
+          ),
+        ),
+        //_buildSections()
+        SizedBox(
+          height: 20,
+          child: Row(
+            children: _buildSections(context),
+          ),
+        ),
+        //_buildPointerPoition()
+        ValueListenableBuilder<double>(
+            valueListenable: pointerValue,
+            builder: (context, value, _) {
+              return Row(
+                children: _buildPointerPosition(value, context),
+              );
+            }),
+      ],
+    );
+  }
+
+  //Defining _buildScale() : Range scale of a given test
+  List<Widget> _buildScale(BuildContext context) {
+    List<Widget> scale = [];
+    double totalWidth = MediaQuery.of(context).size.width - 40;
+    for (var metadata in testMetadata) {
+      scale.add(
+        Expanded(
+          flex: ((metadata.end - metadata.start) *
+                  totalWidth ~/
+                  testMetadata.last.end)
+              .toInt(),
+          child: Text(
+            metadata.start.toInt().toString(),
+            style: const TextStyle(fontSize: 12),
+          ),
+        ),
+      );
+    }
+    scale.add(
+      Text(
+        testMetadata.last.end.toInt().toString(),
+        style: const TextStyle(fontSize: 12),
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
+    );
+    return scale;
+  }
+
+  //Defining _buildSections() : ColoredBars
+  List<Widget> _buildSections(BuildContext context) {
+    List<Widget> sections = [];
+    double totalWidth = MediaQuery.of(context).size.width - 40;
+    for (var metadata in testMetadata) {
+      sections.add(
+        Expanded(
+          flex: ((metadata.end - metadata.start) *
+                  totalWidth ~/
+                  testMetadata.last.end)
+              .toInt(),
+          child: Container(
+            decoration: BoxDecoration(
+                color: metadata.color,
+                //only rounding the left and right edges
+                borderRadius: metadata == testMetadata.first 
+                    ? const BorderRadius.only(
+                        topLeft: Radius.circular(15),
+                        bottomLeft: Radius.circular(15))
+                    : metadata == testMetadata.last
+                        ? const BorderRadius.only(
+                            topRight: Radius.circular(15),
+                            bottomRight: Radius.circular(15))
+                        : BorderRadius.circular(0)),
+          ),
+        ),
+      );
+    }
+    return sections;
+  }
+
+  //Defining _BuildPointerPosition() : Pointer marker position based on the value input
+  List<Widget> _buildPointerPosition(double value, BuildContext context) {
+    List<Widget> sections = [];
+    double totalWidth = MediaQuery.of(context).size.width - 40;
+    sections.add(
+      Expanded(
+        flex: ((value / testMetadata.last.end) * totalWidth).toInt(),
+        child: Container(
+            // alignment: Alignment.centerRight,
+            color: Colors.red),
+      ),
+    );
+    sections.add(
+      Column(children: [
+        const Icon(
+          Icons.arrow_drop_up,
+          size: 20,
+        ),
+        Text(
+          value.toInt().toString(),
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        )
+      ]),
+    );
+    sections.add(
+      Expanded(
+        flex: (((testMetadata.last.end - value) / testMetadata.last.end) *
+                totalWidth)
+            .toInt(),
+        child: Container(),
+      ),
+    );
+
+    return sections;
+  }
+}
+
+//Defining the TextField Widget
+class TextFieldWidget extends StatelessWidget {
+  final TextEditingController _controller = TextEditingController();
+  final ValueNotifier<double> pointerValue;
+  final testMetadata = a_test_metadata;
+
+
+  TextFieldWidget({super.key, required this.pointerValue});
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  @override
+  Widget build(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 40),
+        child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Flexible(
+              flex: 1,
+              child: TextFormField(
+                controller: _controller,
+                textAlign: TextAlign.center,
+                style:
+                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                decoration: InputDecoration(
+                  contentPadding: EdgeInsets.all(5),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18.0),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18.0),
+                  ),
+                  errorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18.0),
+                  ),
+                  focusedErrorBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18.0),
+                  ),
+                ),
+
+                keyboardType: TextInputType.number,
+                //Handling input field validations
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a value';
+                  }
+                  final double parsedValue = double.tryParse(value)!;
+                  if (parsedValue < testMetadata.first.start || parsedValue > testMetadata.last.end) {
+                    return 'Value must be between 0 and 120';
+                  }
+                  return null; // Return null for valid input
+                },
+                // // If we uncomment the section below, we can see the pointer shifting 
+                // // as soon as we enter some value in the input field, instead of doing button's onPress()
+                //
+                // onChanged: (value) {
+                //   double parsedValue = double.tryParse(value) ?? 0;
+                //   pointerValue.value = parsedValue;
+                // },
+                //
+              ),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            const SizedBox(
+              width: 5,
             ),
+            IconButton(
+              icon: const Icon(
+                Icons.arrow_circle_right_rounded,
+                size: 40,
+              ),
+              color: Colors.black,
+              onPressed: () {
+                if (_formKey.currentState!.validate()) {
+                  // Form is valid, perform action here
+                  double parsedValue = double.tryParse(_controller.value.text) ?? 0;
+                  // Perform action with the valid value
+                  pointerValue.value = parsedValue;
+                }
+              },
+            )
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
